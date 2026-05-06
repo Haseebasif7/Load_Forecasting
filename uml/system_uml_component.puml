@@ -1,0 +1,28 @@
+@startuml
+left to right direction
+skinparam componentStyle rectangle
+skinparam linetype ortho
+actor "User" as U
+component "Web Dashboard
+(Next.js)" as UI
+component "Forecasting API
+(FastAPI)" as API
+component "Inference Engine
+(LSTM + Naive)" as INF
+component "Training & Evaluation
+(Modal + PyTorch)" as TRN
+component "Model Artifacts
+(checkpoint/scaler/splits/metrics)" as ART
+database "UCI Data (Processed)
+Parquet" as DATA
+
+U --> UI : Select window, view charts
+UI --> API : REST: /health /meta /test-windows /predict
+API --> INF : Build window + infer
+INF --> ART : Load model/scaler/splits
+INF --> DATA : Read context + targets
+API --> UI : Forecast, errors, summary
+TRN --> DATA : Preprocess + split
+TRN --> ART : Save models + metrics
+TRN --> API : Deploy chosen artifacts
+@enduml

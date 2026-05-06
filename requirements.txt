@@ -1,0 +1,10 @@
+# Local / CI mirror of Modal image. Pin loosely for dev; Modal pins exact versions.
+pandas>=2.1.0,<3
+numpy>=1.26.0,<3
+scikit-learn>=1.3.0,<2
+pyarrow>=14.0.0,<20
+matplotlib>=3.8.0,<4
+joblib>=1.3.0,<2
+tqdm>=4.66.0,<5
+torch>=2.1.0,<3
+modal>=0.64.0,<1
