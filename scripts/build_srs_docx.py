@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""Build SRS_Electricity_Load_Forecasting_IEEE.docx from the markdown SRS with Word styles."""
+"""Build SRS_Electricity_Load_Forecasting_IEEE.docx from the markdown project report with Word styles."""
 
 from __future__ import annotations
 
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.shared import Pt
+from docx.shared import Inches, Pt
+
+IMG_MD = re.compile(r"^!\[([^\]]*)\]\(([^)]+)\)\s*$")
 
 
 def set_document_default_font(doc: Document) -> None:
@@ -74,7 +78,21 @@ def parse_md_table(block: list[str]) -> tuple[list[list[str]], int]:
     return rows, i
 
 
+def add_markdown_image(doc: Document, md_dir: Path, _alt: str, rel_path: str) -> None:
+    pic = (md_dir / rel_path.strip()).resolve()
+    if not pic.is_file():
+        add_paragraph(doc, f"[Missing image file: {rel_path}]")
+        return
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run()
+    run.add_picture(str(pic), width=Inches(6.45))
+    doc.add_paragraph()
+    # Alt text is not duplicated here; the SRS markdown supplies *Figure …* captions after the image.
+
+
 def md_to_docx(md_path: Path, out_path: Path) -> None:
+    md_dir = md_path.parent
     raw = md_path.read_text(encoding="utf-8")
     raw = re.sub(r"<!--.*?-->\s*", "", raw, flags=re.DOTALL)
     lines = raw.split("\n")
@@ -101,7 +119,7 @@ def md_to_docx(md_path: Path, out_path: Path) -> None:
     doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = p.add_run("Software Requirements Specification (SRS)")
+    r = p.add_run("Project Report")
     r.bold = True
     r.font.size = Pt(16)
     r.font.name = "Times New Roman"
@@ -117,8 +135,6 @@ def md_to_docx(md_path: Path, out_path: Path) -> None:
     for line in (
         "Course: Software Engineering",
         "Semester: Spring 2026",
-        "Technical Focus Area: AI / Deep Learning — Time-Series Load Forecasting",
-        "Dataset Basis: UCI Electricity Load Diagrams 2011–2014",
     ):
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -163,9 +179,9 @@ def md_to_docx(md_path: Path, out_path: Path) -> None:
 
         if line.startswith("### "):
             rest = line[4:].strip()
-            if rest in ("*End of SRS*", "End of SRS"):
+            if rest in ("*End of SRS*", "End of SRS", "*End of Project Report*", "End of Project Report"):
                 para = doc.add_paragraph()
-                run = para.add_run("End of SRS")
+                run = para.add_run("End of Project Report")
                 run.italic = True
                 run.font.name = "Times New Roman"
             else:
@@ -189,6 +205,12 @@ def md_to_docx(md_path: Path, out_path: Path) -> None:
             run = para.add_run("\n".join(buf))
             run.font.name = "Courier New"
             run.font.size = Pt(10)
+            continue
+
+        m_img = IMG_MD.match(line.strip())
+        if m_img:
+            add_markdown_image(doc, md_dir, m_img.group(1), m_img.group(2))
+            idx += 1
             continue
 
         stripped = line.lstrip()
@@ -237,6 +259,9 @@ def main() -> None:
     out = root / "SRS_Electricity_Load_Forecasting_IEEE.docx"
     if not md.is_file():
         raise SystemExit(f"Missing {md}")
+    gen = root / "scripts" / "generate_architecture_diagram.py"
+    if gen.is_file():
+        subprocess.run([sys.executable, str(gen)], check=True, cwd=str(root))
     md_to_docx(md, out)
     print(f"Wrote {out}")
 

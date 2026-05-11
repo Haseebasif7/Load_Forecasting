@@ -83,6 +83,17 @@ export PYTHONPATH="$(pwd)"
 # preprocess_from_zip etc. can be called from Python if you have the zip path
 ```
 
+## Automated tests (`testing/`)
+
+Pytest suite for `src/windows.split_indices`, `backend/app/inference` (naive baseline, sMAPE), and FastAPI routes **without** real checkpoints on disk (uses a synthetic `LoadedState`). Aligns with project report **TC-01–TC-08**; **TC-09** remains manual (browser + Next.js).
+
+```bash
+pip install -r requirements.txt   # includes pytest + httpx
+pytest testing -v
+```
+
+See [testing/README.md](testing/README.md).
+
 ## Web app (FastAPI + Next.js)
 
 A small dashboard to pick a sample from the test split and compare the LSTM forecast against the seasonal-naive baseline lives in `backend/` and `frontend/`. Both run locally and use the artifacts under `artifacts_best/` (single best, seed 42) and the full ensemble under `artifacts/models/`.
